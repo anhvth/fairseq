@@ -99,10 +99,12 @@ class MultiprocessingEncoder(object):
     def initializer(self):
         global bpe
         bpe = get_encoder(self.args.encoder_json, self.args.vocab_bpe)
+        from transformers import AutoTokenizer
+        bpe = AutoTokenizer.from_pretrained('vinai/phobert-base-v2')
 
     def encode(self, line):
         global bpe
-        ids = bpe.encode(line)
+        ids = bpe.encode(line, add_special_tokens=False)
         return list(map(str, ids))
 
     def decode(self, tokens):

@@ -139,3 +139,18 @@ wandb/
 nohup.out
 multirun
 outputs
+
+
+
+#======
+
+
+# examples/roberta/multiprocessing_huggingface_encoder.py
+gpt2_bpe/
+out.txt
+out.txt.bpe
+phobert/
+# preproc.py
+tokenize.sh
+wikitext-103-raw-v1.zip
+wikitext-103-raw/
