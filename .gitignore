@@ -151,6 +151,6 @@ out.txt
 out.txt.bpe
 phobert/
 # preproc.py
-tokenize.sh
+# tokenize.sh
 wikitext-103-raw-v1.zip
 wikitext-103-raw/
