@@ -17,7 +17,7 @@ criterion: masked_lm
 
 dataset:
   batch_size: 16
-  ignore_unused_valid_subsets: trueh
+  ignore_unused_valid_subsets: true
 
 optimizer:
   _name: adam
