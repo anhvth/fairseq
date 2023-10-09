@@ -814,7 +814,19 @@ class Trainer(object):
 
         # forward and backward pass
         logging_outputs, sample_size, ooms = [], 0, 0
+#        for i, sample in enumerate(samples):  # delayed update loop
+        invalid_count = 0
         for i, sample in enumerate(samples):  # delayed update loop
+            if sample['net_input']['src_lengths'].max() > self.cfg.task.tokens_per_sample:
+                sample_batch_idx = sample['net_input']['src_lengths'].argmax().item()
+                sample_id =  sample['id'][sample_batch_idx].item()
+                out_file = os.path.abspath(f'invalid_sample_{sample_id}.pt')
+                invalid_count += 1
+                try:
+                    torch.save(sample, out_file)
+                finally:
+                    logger.warning(f' {invalid_count=} Invalid sample -> {out_file}, \n Ignore and Continue....')
+                    continue
             sample, is_dummy_batch = self._prepare_sample(sample)
 
             def maybe_no_sync():

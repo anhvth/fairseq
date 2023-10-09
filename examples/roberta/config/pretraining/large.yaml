@@ -36,7 +36,7 @@ optimization:
   update_freq: [16]
 
 model:
-  _name: roberta
+  _name: roberta_large
   max_positions: 512
   dropout: 0.1
   attention_dropout: 0.1
