@@ -3,6 +3,7 @@ common:
   fp16: true
   log_format: json
   log_interval: 10
+  tensorboard_logdir: tb
 
 checkpoint:
   no_epoch_checkpoints: true
@@ -30,7 +31,7 @@ lr_scheduler:
   warmup_updates: 10000
 
 optimization:
-  clip_norm: 0
+  clip_norm: 1
   lr: [0.0005]
   max_update: 125000
   update_freq: [16]

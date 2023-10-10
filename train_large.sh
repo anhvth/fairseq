@@ -31,7 +31,7 @@ fairseq-hydra-train -m --config-dir examples/roberta/config/pretraining \
     optimization.update_freq=[16] dataset.batch_size=32 \
     task.tokens_per_sample=512 \
     hydra.sweep.dir=multirun/large \
-    lr_scheduler.warmup_updates=1000
+    lr_scheduler.warmup_updates=2000
     # checkpoint.reset_optimizer=True
     
 
