@@ -5,6 +5,14 @@
 """
 RoBERTa: A Robustly Optimized BERT Pretraining Approach.
 """
+import os
+try:
+    USE_FAST = os.environ['USE_FAST'] == '1'
+except:
+    USE_FAST = False
+    from loguru import logger
+    logger.warning('env variable USE_FAST is not set, make it False as default')
+
 
 import logging
 
@@ -233,8 +241,11 @@ class RobertaModel(FairseqEncoderModel):
             if not safe_hasattr(args, "tokens_per_sample"):
                 args.tokens_per_sample = task.max_positions()
             args.max_positions = args.tokens_per_sample
-
-        encoder = RobertaEncoder(args, task.source_dictionary)
+        if USE_FAST:
+            encoder = FlashRobertaEncoder(args, task.source_dictionary)
+            # encoder.ref = [RobertaEncoder(args, task.source_dictionary)]
+        else:
+            encoder = RobertaEncoder(args, task.source_dictionary)
 
         if OmegaConf.is_config(args):
             OmegaConf.set_struct(args, True)
@@ -533,6 +544,7 @@ class RobertaClassificationHead(nn.Module):
         return x
 
 
+        
 class RobertaEncoder(FairseqEncoder):
     """RoBERTa encoder."""
 
@@ -598,11 +610,16 @@ class RobertaEncoder(FairseqEncoder):
                   is a list of hidden states. Note that the hidden
                   states have shape `(src_len, batch, vocab)`.
         """
+        
+        # if hasattr(self, )
         x, extra = self.extract_features(
             src_tokens, return_all_hiddens=return_all_hiddens
         )
+        
         if not features_only:
-            x = self.output_layer(x, masked_tokens=masked_tokens)
+            x_prev = x
+            x = self.output_layer(x_prev, masked_tokens=masked_tokens)
+        
         return x, extra
 
     def extract_features(self, src_tokens, return_all_hiddens=False, **kwargs):
@@ -623,6 +640,70 @@ class RobertaEncoder(FairseqEncoder):
         """Maximum output length supported by the encoder."""
         return self.args.max_positions
 
+
+class FlashRobertaEncoder(FairseqEncoder):
+    def __init__(self, args, dictionary):
+        super().__init__(dictionary)
+        self.args = args
+        from transformers import BertConfig
+        from flash_attn.models.bert import BertModel
+        # import ipdb; ipdb.set_trace()
+        b = BertConfig(vocab_size=98585)
+        from fairseq.models.fairseq_encoder import FairseqEncoder
+        self.flash_encoder = BertModel(b)
+        
+        self.lm_head = self.build_lm_head(
+            embed_dim=args.encoder_embed_dim,
+            output_dim=len(dictionary),
+            activation_fn=args.activation_fn,
+            weight=(
+                self.flash_encoder.embeddings.word_embeddings.weight
+                if not args.untie_weights_roberta
+                else None
+            ),
+        )
+    def output_layer(self, features, masked_tokens=None, **unused):
+        return self.lm_head(features, masked_tokens)
+    
+    def build_lm_head(self, embed_dim, output_dim, activation_fn, weight):
+        return RobertaLMHead(embed_dim, output_dim, activation_fn, weight)
+    def max_positions(self):
+        """Maximum output length supported by the encoder."""
+        return self.args.max_positions
+
+
+    def forward(
+        self,
+        src_tokens,
+        features_only=False,
+        return_all_hiddens=False,
+        masked_tokens=None,
+        **unused,
+    ):
+        """
+        Args:
+            src_tokens (LongTensor): input tokens of shape `(batch, src_len)`
+            features_only (bool, optional): skip LM head and just return
+                features. If True, the output will be of shape
+                `(batch, src_len, embed_dim)`.
+            return_all_hiddens (bool, optional): also return all of the
+                intermediate hidden states (default: False).
+
+        Returns:
+            tuple:
+                - the LM output of shape `(batch, src_len, vocab)`
+                - a dictionary of additional data, where 'inner_states'
+                  is a list of hidden states. Note that the hidden
+                  states have shape `(src_len, batch, vocab)`.
+        """
+        if return_all_hiddens:
+            raise not ImportError
+        x = self.flash_encoder(src_tokens)
+        x = x.last_hidden_state
+        if not features_only:
+            x_prev = x
+            x = self.output_layer(x_prev, masked_tokens=masked_tokens)
+        return x, {'inner_states': None}
 
 @register_model_architecture("roberta", "roberta")
 def base_architecture(args):
