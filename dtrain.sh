@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=2
-export USE_FAST=1
+#export USE_FAST=1
 
 # DATA_DIR="/mnt/nfs-data/users/anhvth5/store/data-bert-toy/data-bin/"
 DATA_DIR=/mnt/nfs-data/users/anhvth5/store/data-bin
