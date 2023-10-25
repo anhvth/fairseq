@@ -11,7 +11,7 @@ try:
 except:
     USE_FAST = False
     from loguru import logger
-    logger.warning('env variable USE_FAST is not set, make it False as default')
+    logger.info('env variable USE_FAST is not set, make it False as default')
 
 
 import logging
@@ -388,6 +388,7 @@ class RobertaModel(FairseqEncoderModel):
         )
 
         logger.info(x["args"])
+        import ipdb; ipdb.set_trace()
         return RobertaHubInterface(x["args"], x["task"], x["models"][0])
 
     def upgrade_state_dict_named(self, state_dict, name):

@@ -1,6 +1,6 @@
 # @package _group_
 common:
-  fp16: true
+  amp: true
   log_format: json
   log_interval: 10
   tensorboard_logdir: tb
@@ -32,8 +32,8 @@ lr_scheduler:
 
 optimization:
   clip_norm: 1
-  lr: [0.0005]
-  max_update: 125000
+  lr: [0.00025]
+  max_update: 125_000
   update_freq: [16]
 
 model:
